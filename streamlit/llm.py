@@ -42,7 +42,6 @@ def getHistoryRetriever():
         "formulate a standalone question which can be understood "
         "without the chat history. Do NOT answer the question, "
         "just reformulate it if needed and otherwise return it as is."
-        "Context:\n{context}"
     )
 
     contextualize_q_prompt = ChatPromptTemplate.from_messages(
@@ -106,7 +105,8 @@ def getRAGChain():
         "답변을 알 수 없다면 모른다고 답변해주세요"
         "답변을 제공할 때는 소득세법 (XX조)에 따르면 이라고 시작하면서 답변해주시고"
         "2-3 문장정도의 짧은 내용의 답변을 원합니다"
-        "Context:\n{context}"
+        "\n\n"
+        "{context}"
     )
 
     qa_prompt = ChatPromptTemplate.from_messages(
@@ -132,16 +132,13 @@ def getRAGChain():
     return conversational_rag_chain
 
 
-def getAIResponse(user_message):
+def getAIResponse(user_message, session_id=None):
+    session_id = session_id or "default"
     dictionary_chain = getDictionaryChain()
     rag_chain = getRAGChain()
 
     tax_chain = {"input": dictionary_chain} | rag_chain
     return tax_chain.stream(
-        {
-            "question": user_message
-        },
-        config={
-            "configurable": {"session_id": "abc123"}
-        },
+        {"question": user_message},
+        config={"configurable": {"session_id": session_id}},
     )
